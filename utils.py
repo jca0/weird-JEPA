@@ -1,7 +1,11 @@
+from pathlib import Path
+
 import numpy as np
 import torch
 from stable_pretraining import data as dt
 from lightning.pytorch.callbacks import Callback
+
+ROOT = Path(__file__).resolve().parent
 
 def get_img_preprocessor(source: str, target: str, img_size: int = 224):
     imagenet_stats = dt.dataset_stats.ImageNet
@@ -57,4 +61,5 @@ class SaveCkptCallback(Callback):
             run_name=self.run_name,
             config=self.cfg,
             filename=f'weights_epoch_{epoch}.pt',
+            cache_dir=str(ROOT),
         )
