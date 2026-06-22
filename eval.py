@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 
 os.environ["MUJOCO_GL"] = "egl"
 
@@ -133,11 +134,9 @@ def run(cfg: DictConfig):
     else:
         policy = swm.policy.RandomPolicy()
 
-    results_path = (
-        (ROOT / "checkpoints" / cfg.policy).parent
-        if policy != "random"
-        else ROOT
-    )
+    task_name = cfg.world.env_name.split("/")[-1]
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    results_path = ROOT / "outputs" / f"{task_name}_{timestamp}"
 
     # sample the episodes and the starting indices
     episode_len = get_episodes_length(dataset, ep_indices)
