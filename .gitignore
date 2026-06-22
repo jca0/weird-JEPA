@@ -3,5 +3,5 @@ __pycache__/
 .stable_worldmodel/
 outputs/
 wandb/
-lewm-pusht/
-kickbacks.vsix
+checkpoints/
+datasets/
