@@ -4,7 +4,7 @@ defaults:
   - data: pusht
   - model: lewm
 
-output_model_name: lewm
+output_model_name: myJEPA
 subdir: ${hydra:job.id}
 
 num_workers: 6

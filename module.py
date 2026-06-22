@@ -300,3 +300,23 @@ class ARPredictor(nn.Module):
         x = self.dropout(x)
         x = self.transformer(x, c)
         return x
+
+
+class GRUPredictor(nn.Module):
+    """Lightweight GRU-based predictor."""
+
+    def __init__(self, input_dim, hidden_dim, output_dim=None, num_layers=2, dropout=0.0, **kwargs):
+        super().__init__()
+        self.gru = nn.GRU(
+            input_dim * 2, hidden_dim, num_layers=num_layers,
+            batch_first=True, dropout=dropout if num_layers > 1 else 0.0,
+        )
+        self.out_proj = nn.Linear(hidden_dim, output_dim or input_dim)
+
+    def forward(self, x, c):
+        """
+        x: (B, T, D) - context embeddings
+        c: (B, T, D) - action embeddings
+        """
+        h = self.gru(torch.cat([x, c], dim=-1))[0]
+        return self.out_proj(h)
