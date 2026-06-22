@@ -3,7 +3,7 @@ _target_: jepa.JEPA
 encoder:
   _target_: module.MobileNetEncoder
   embed_dim: ${embed_dim}
-  pretrained: true
+  pretrained: false  # Set to false to avoid SSL cert issues when downloading pretrained weights
 
 predictor:
   _target_: module.ARPredictor
