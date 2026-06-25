@@ -10,3 +10,4 @@ logs/
 *.egg-info/
 wandb_resume.json
 convert_checkpoint.py
+figures/
