@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from torch import nn
 
+
 def detach_clone(v):
     return v.detach().clone() if torch.is_tensor(v) else v
 
@@ -149,5 +150,52 @@ class JEPA(nn.Module):
         info_dict = self.rollout(info_dict, action_candidates)
 
         cost = self.criterion(info_dict)
-        
+
         return cost
+
+
+class StateJEPA(nn.Module):
+    """JEPA variant that operates on state vectors (joint_pos + object_pos) instead of pixels."""
+
+    def __init__(
+        self,
+        encoder,
+        predictor,
+        action_encoder,
+        projector=None,
+        pred_proj=None,
+    ):
+        super().__init__()
+        self.encoder = encoder
+        self.predictor = predictor
+        self.action_encoder = action_encoder
+        self.projector = projector or nn.Identity()
+        self.pred_proj = pred_proj or nn.Identity()
+
+    def encode(self, info):
+        """Encode state observations and actions into embeddings.
+        info: dict with joint_pos, object_pos, and action keys
+        """
+        joint_pos = info["joint_pos"].float()
+        object_pos = info["object_pos"].float()
+        b, t = joint_pos.shape[:2]
+
+        state = torch.cat([joint_pos, object_pos], dim=-1)  # (B, T, state_dim)
+        state_flat = rearrange(state, "b t d -> (b t) d")
+
+        output = self.encoder(state_flat)
+        state_emb = output.last_hidden_state.squeeze(1)  # (B*T, embed_dim)
+        emb = self.projector(state_emb)
+        info["emb"] = rearrange(emb, "(b t) d -> b t d", b=b)
+
+        if "action" in info:
+            info["act_emb"] = self.action_encoder(info["action"])
+
+        return info
+
+    def predict(self, emb, act_emb):
+        """Predict next state embedding."""
+        preds = self.predictor(emb, act_emb)
+        preds = self.pred_proj(rearrange(preds, "b t d -> (b t) d"))
+        preds = rearrange(preds, "(b t) d -> b t d", b=emb.size(0))
+        return preds
