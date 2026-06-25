@@ -302,6 +302,96 @@ class ARPredictor(nn.Module):
         return x
 
 
+class SlotAttention(nn.Module):
+    """Slot Attention module — slots compete to explain input features."""
+
+    def __init__(self, num_slots, dim, iters=3, hidden_dim=128, eps=1e-8):
+        super().__init__()
+        self.num_slots = num_slots
+        self.iters = iters
+        self.eps = eps
+
+        self.slots_mu = nn.Parameter(torch.randn(1, 1, dim))
+        self.slots_log_sigma = nn.Parameter(torch.zeros(1, 1, dim))
+
+        self.norm_input = nn.LayerNorm(dim)
+        self.norm_slots = nn.LayerNorm(dim)
+        self.norm_mlp = nn.LayerNorm(dim)
+
+        self.to_q = nn.Linear(dim, dim)
+        self.to_k = nn.Linear(dim, dim)
+        self.to_v = nn.Linear(dim, dim)
+
+        self.gru = nn.GRUCell(dim, dim)
+
+        self.mlp = nn.Sequential(
+            nn.Linear(dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, dim),
+        )
+
+    def forward(self, inputs):
+        """
+        inputs: (B, N, D) — e.g. flattened spatial features
+        returns: (B, K, D) — slot representations
+        """
+        b, n, d = inputs.shape
+
+        mu = self.slots_mu.expand(b, self.num_slots, -1)
+        sigma = self.slots_log_sigma.exp().expand(b, self.num_slots, -1)
+        slots = mu + sigma * torch.randn_like(mu)
+
+        inputs = self.norm_input(inputs)
+        k = self.to_k(inputs)
+        v = self.to_v(inputs)
+
+        for _ in range(self.iters):
+            slots_prev = slots
+            slots = self.norm_slots(slots)
+            q = self.to_q(slots)
+
+            attn_logits = torch.einsum("bkd,bnd->bkn", q, k) * (d ** -0.5)
+            attn = F.softmax(attn_logits, dim=1)  # softmax over slots
+
+            attn_weights = attn / (attn.sum(dim=-1, keepdim=True) + self.eps)
+            updates = torch.einsum("bkn,bnd->bkd", attn_weights, v)
+
+            slots = self.gru(
+                updates.reshape(-1, d),
+                slots_prev.reshape(-1, d),
+            ).reshape(b, self.num_slots, d)
+
+            slots = slots + self.mlp(self.norm_mlp(slots))
+
+        return slots
+
+
+class StateEncoder(nn.Module):
+    """Encodes concatenated state vectors (e.g. joint_pos + object_pos) into embeddings."""
+
+    def __init__(self, input_dim, embed_dim, hidden_dim=256):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, embed_dim),
+        )
+
+    def forward(self, x):
+        """
+        x: (B, T, input_dim) or (B*T, input_dim)
+        Returns object mimicking HF output for compatibility: .last_hidden_state of shape (B, 1, embed_dim)
+        """
+        out = self.net(x)
+        if out.ndim == 2:
+            out = out.unsqueeze(1)
+        return type('Out', (), {'last_hidden_state': out})()
+
+
 class GRUPredictor(nn.Module):
     """Lightweight GRU-based predictor."""
 
