@@ -85,7 +85,7 @@ def make_env(tasks: list, render: bool = False):
     env = gymnasium.make(
         "FrankaKitchen-v1",
         tasks_to_complete=tasks,
-        render_mode="rgb_array" if render else None,
+        render_mode="human" if render else None,
         terminate_on_tasks_completed=False,
     )
     return env
@@ -336,6 +336,7 @@ def main():
     )
     parser.add_argument("--episodes",  type=int, default=20)
     parser.add_argument("--max_steps", type=int, default=500)
+    parser.add_argument("--render",    action="store_true", help="Show MuJoCo GUI")
     parser.add_argument("--out",       type=str, default=None)
     args = parser.parse_args()
 
@@ -354,7 +355,7 @@ def main():
     print(f"  output:   {out_path}")
     print("=" * 60)
 
-    env    = make_env(args.tasks)
+    env    = make_env(args.tasks, render=args.render)
     teleop = IOSTeleopStream()
     teleop.connect()
     teleop.calibrate()
