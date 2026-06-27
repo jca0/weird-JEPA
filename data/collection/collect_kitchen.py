@@ -85,7 +85,7 @@ def make_env(tasks: list, render: bool = False):
     env = gymnasium.make(
         "FrankaKitchen-v1",
         tasks_to_complete=tasks,
-        render_mode="rgb_array" if render else None,
+        render_mode="human" if render else None,
         terminate_on_tasks_completed=False,
     )
     return env
@@ -292,6 +292,7 @@ def collect_episode(env, teleop: IOSTeleopStream, max_steps: int = 500) -> dict 
             if terminated or truncated:
                 break
 
+            env.render()
             time.sleep(0.02)  # ~50 Hz
 
     except KeyboardInterrupt:
@@ -334,9 +335,10 @@ def main():
         choices=["microwave", "kettle", "bottom_burner", "top_burner",
                  "light_switch", "slide_cabinet", "hinge_cabinet"],
     )
-    parser.add_argument("--episodes",  type=int, default=20)
-    parser.add_argument("--max_steps", type=int, default=500)
-    parser.add_argument("--out",       type=str, default=None)
+    parser.add_argument("--episodes",  type=int,  default=20)
+    parser.add_argument("--max_steps", type=int,  default=500)
+    parser.add_argument("--out",       type=str,  default=None)
+    parser.add_argument("--render",    action="store_true", help="Open MuJoCo viewer window.")
     args = parser.parse_args()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -354,7 +356,7 @@ def main():
     print(f"  output:   {out_path}")
     print("=" * 60)
 
-    env    = make_env(args.tasks)
+    env    = make_env(args.tasks, render=args.render)
     teleop = IOSTeleopStream()
     teleop.connect()
     teleop.calibrate()
