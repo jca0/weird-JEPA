@@ -1,12 +1,12 @@
-_target_: jepa.JEPA
+_target_: model.jepa.JEPA
 
 encoder:
-  _target_: module.MobileNetEncoder
+  _target_: model.module.MobileNetEncoder
   embed_dim: ${embed_dim}
   pretrained: true
 
 predictor:
-  _target_: module.GRUPredictor
+  _target_: model.module.GRUPredictor
   input_dim: ${embed_dim}
   hidden_dim: ${embed_dim}
   output_dim: ${embed_dim}
@@ -14,12 +14,12 @@ predictor:
   dropout: 0.1
 
 action_encoder:
-  _target_: module.Embedder
+  _target_: model.module.Embedder
   input_dim: ???
   emb_dim: ${embed_dim}
 
 projector:
-  _target_: module.MLP
+  _target_: model.module.MLP
   input_dim: ${embed_dim}
   output_dim: ${embed_dim}
   hidden_dim: 2048
@@ -28,7 +28,7 @@ projector:
     _partial_: true
 
 pred_proj:
-  _target_: module.MLP
+  _target_: model.module.MLP
   input_dim: ${embed_dim}
   output_dim: ${embed_dim}
   hidden_dim: 2048

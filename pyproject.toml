@@ -9,10 +9,14 @@ dependencies = [
     "pyarrow==23.0.1",
     "datasets==5.0.0",
     "hdf5plugin==6.0.0",
+    "hebi-py",
 ]
 
 [tool.setuptools]
-py-modules = ["jepa", "module", "train", "eval", "utils"]
+py-modules = ["train", "eval"]
+
+[tool.setuptools.packages.find]
+include = ["model*", "data*"]
 
 [tool.uv]
 extra-index-url = ["https://download.pytorch.org/whl/cu124"]

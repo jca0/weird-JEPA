@@ -4,8 +4,7 @@ __pycache__/
 outputs/
 wandb/
 checkpoints/
-datasets/*.h5
-datasets/*.h5.zst
+data/raw/
 logs/
 *.egg-info/
 wandb_resume.json

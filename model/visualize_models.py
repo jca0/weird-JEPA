@@ -10,8 +10,9 @@ from omegaconf import OmegaConf
 from torchinfo import summary
 from torchview import draw_graph
 
-CONFIG_DIR = str(Path(__file__).parent / "config" / "train")
-OUTPUT_DIR = Path(__file__).parent / "figures"
+ROOT = Path(__file__).resolve().parent.parent
+CONFIG_DIR = str(ROOT / "config" / "train")
+OUTPUT_DIR = ROOT / "figures"
 
 MODELS = {
     "lewm": "ViT-Tiny + ARPredictor",
