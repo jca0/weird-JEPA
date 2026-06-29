@@ -10,3 +10,4 @@ logs/
 wandb_resume.json
 convert_checkpoint.py
 figures/
+notes/

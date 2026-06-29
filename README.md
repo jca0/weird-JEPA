@@ -1,6 +1,6 @@
-# weird-JEPA
+# my-JEPA
 
-A JEPA-based world model for robotic control tasks.
+A JEPA-based model for robotic control tasks.
 
 ## Setup
 
